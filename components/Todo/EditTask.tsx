@@ -24,10 +24,10 @@ export const EditTask = ({ modalOpened, closeModal, saveTask, task, setTask }: E
 
 
     useEffect(() => {
-        // console.log("task", task);
+        console.log("task", task);
         form.setInitialValues(task);
         form.setValues(task);
-    }, [task]);
+    }, [task, modalOpened]);
 
 
     return (
@@ -40,14 +40,10 @@ export const EditTask = ({ modalOpened, closeModal, saveTask, task, setTask }: E
                     {...form.getInputProps('id')}
                     key={form.key('id')}
                     style={{display: 'none'}}
-                    // value={task.id} 
-                // onChange={(e) => { setTask({ ...task, id: parseInt(e.target.value) }) }} 
                 />
                 <Checkbox
                 {...form.getInputProps('done', { type: 'checkbox' })}
                 key={form.key('done')}
-                // checked={task.done}
-                // onChange={(event) => setTask({ ...task, done: event.currentTarget.checked })}
                 label="完成"
                 />
                 <TextInput
@@ -56,8 +52,6 @@ export const EditTask = ({ modalOpened, closeModal, saveTask, task, setTask }: E
                     mt={'md'}
                     placeholder={'Task Title'}
                     required
-                    // value={task.title}
-                    // onChange={(e) => { setTask({ ...task, title: e.target.value }) }}
                     label={'Title'}
                 />
                 <TextInput
@@ -65,8 +59,6 @@ export const EditTask = ({ modalOpened, closeModal, saveTask, task, setTask }: E
                     key={form.key('summary')}
                     mt={'md'}
                     placeholder={'Task Summary'}
-                    // value={task.summary}
-                    // onChange={(e) => { setTask({ ...task, summary: e.target.value }) }}
                     label={'Summary'}
                 />
                 <Group mt={'md'} justify='space-between'>

@@ -1,5 +1,5 @@
 "use client";
-import { ActionIcon, Button, Container, Group, Title, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Button, Container, Group, LoadingOverlay, Title, useMantineColorScheme } from '@mantine/core';
 import { IconMoonStars, IconSun } from '@tabler/icons-react';
 import { useDisclosure, useLocalStorage } from '@mantine/hooks';
 import { useEffect, useRef, useState } from 'react';
@@ -8,6 +8,7 @@ import { Task } from './types';
 import {EditTask} from '@/components/Todo/EditTask';
 import React from 'react';
 import TaskHeader from '@/components/Todo/TaskHeader';
+import useSWR from 'swr';
 
 export default function HomePage() {
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
@@ -35,7 +36,6 @@ export default function HomePage() {
   }
 
   const saveTask = (task: Task) => {
-    console.log("task", task);
     let newTasks = [];
     if (task.id === 0) {
       task.id = new Date().getTime();
@@ -59,28 +59,24 @@ export default function HomePage() {
 
   function loadTasks() {
     let loadedTasks = localStorage.getItem('tasks');
-
     let tasks = JSON.parse(loadedTasks || "[]");
-
-    if (tasks) {
-      setTasks(tasks);
-    }
+    setTasks(tasks);
   }
+
+  // 使用swr加载数据，增加loading信息
+  const { data, error, isLoading : isAllTasksLoading } = useSWR('/api/tasks', loadTasks);
 
   function saveTasks(tasks: Task[]) {
     localStorage.setItem('tasks', JSON.stringify(tasks));
   }
 
-  useEffect(() => {
-    loadTasks();
-  }, []);
-
   return (
     <>
       <EditTask modalOpened={modalOpened} task={task} setTask={setTask} closeModal={closeModal} saveTask={saveTask} />
-      <Container size={550}>
+      <Container size={550} pos="relative">
+        <LoadingOverlay visible={isAllTasksLoading || isSavingTask} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
         <TaskHeader toggleColorScheme={toggleColorScheme} colorScheme={colorScheme}></TaskHeader>
-        <TaskList tasks={tasks} editTask={addOrEditTask} deleteTask={deleteTask}></TaskList>
+        <TaskList tasks={tasks} editTask={addOrEditTask} deleteTask={deleteTask} isAllTasksLoading={isAllTasksLoading}></TaskList>
         <Button onClick={() => addOrEditTask(0)} fullWidth mt={'md'}>New Task</Button>
       </Container>
     </>
