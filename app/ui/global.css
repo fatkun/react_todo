@@ -1,0 +1,4 @@
+.task_done {
+    text-decoration: line-through;
+    color: gray;
+}
