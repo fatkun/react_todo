@@ -1,17 +1,19 @@
 import { Task } from "@/app/types";
-import { Button, Checkbox, Group, Modal, TextInput } from "@mantine/core";
+import { Button, Checkbox, Group, LoadingOverlay, Modal, TextInput } from "@mantine/core";
 import { useForm, hasLength } from '@mantine/form';
 import { useEffect, useRef, useState } from "react";
 
 interface EditTaskProps {
     modalOpened: boolean;
+    isTaskLoading: boolean;
+    setIsTaskLoading: (value: boolean) => void;
     closeModal: () => void;
-    saveTask: (task: Task) => void;
+    saveTask: (task: Task) => Promise<string>;
     task: Task;
     setTask: (task: Task) => void;
 }
 
-export const EditTask = ({ modalOpened, closeModal, saveTask, task, setTask }: EditTaskProps) => {
+export const EditTask = ({ modalOpened, isTaskLoading, setIsTaskLoading, closeModal, saveTask, task, setTask }: EditTaskProps) => {
     
     const form = useForm({
         mode: 'uncontrolled',
@@ -23,6 +25,7 @@ export const EditTask = ({ modalOpened, closeModal, saveTask, task, setTask }: E
     });
 
 
+    // 通过指定监控对象的变化，会执行第一个方法
     useEffect(() => {
         console.log("task", task);
         form.setInitialValues(task);
@@ -31,10 +34,14 @@ export const EditTask = ({ modalOpened, closeModal, saveTask, task, setTask }: E
 
 
     return (
-        <Modal opened={modalOpened} onClose={closeModal} title="添加任务">
+        <Modal opened={modalOpened} onClose={closeModal} closeOnClickOutside={false} closeOnEscape={false} title={task.id == 0 ? "Create Task" : "Update Task"}>
+            <LoadingOverlay visible={isTaskLoading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
             <form onSubmit={form.onSubmit((values) => {
-                saveTask(values); 
-                closeModal(); 
+                setIsTaskLoading(true);
+                saveTask(values).then((result) => {
+                    setIsTaskLoading(false);
+                    closeModal();
+                });
             })}>
                 <TextInput
                     {...form.getInputProps('id')}

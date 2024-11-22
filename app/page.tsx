@@ -16,6 +16,7 @@ export default function HomePage() {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const { setColorScheme } = useMantineColorScheme();
+  const [isTaskLoading, setIsTaskLoading] = useState<boolean>(false);
 
   const [colorScheme, saveColorScheme] = useLocalStorage({
     key: 'mantine-color-scheme',
@@ -35,26 +36,62 @@ export default function HomePage() {
     saveTasks(newTasks);
   }
 
-  const saveTask = (task: Task) => {
-    let newTasks = [];
-    if (task.id === 0) {
-      task.id = new Date().getTime();
-      newTasks = [...tasks, task];
-    } else {
-      newTasks = tasks.map((t) => t.id === task.id ? task : t);
-    }
-    setTasks(newTasks);
-    saveTasks(newTasks);
+  const saveTask = (task: Task): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      // 模拟保存时间
+      setTimeout(() => {
+        let newTasks = [];
+        if (task.id === 0) {
+          task.id = new Date().getTime();
+          newTasks = [...tasks, task];
+        } else {
+          newTasks = tasks.map((t) => t.id === task.id ? task : t);
+        }
+        setTasks(newTasks);
+        saveTasks(newTasks);
+        resolve("success");
+
+        console.log("saveTask", task);
+      }, 200);
+    })
   }
 
   const addOrEditTask = (id: number) => {
     if (id == 0) {
       setTask({id: 0, title: "", summary: "", done: false});
     } else {
+      setIsTaskLoading(true);
       // 从远程加载数据
-      setTask(tasks.filter((task) => task.id === id)[0]);
+      setTask({id: 0, title: "", summary: "", done: false});
+      loadTask(id).then(t => {
+        setTask(t);
+        setIsTaskLoading(false);
+      }).catch(e => {
+        console.log(e);
+        alert(e);
+        setIsTaskLoading(false);
+        closeModal();
+      });
     }
     openModal();
+  }
+
+  function loadTask(id : number): Promise<Task> {
+    return new Promise((resolve, reject) => {
+      // 模拟加载时间
+      setTimeout(() => {
+        let success = true;
+        if (success) {
+          let loadedTasks = localStorage.getItem('tasks');
+          let tasks = JSON.parse(loadedTasks || "[]");
+          let task = tasks.filter((task: { id: number}) => task.id === id)[0];
+          resolve(task);
+        } else {
+          reject("error");
+        }
+      }, 300);
+    });
+    
   }
 
   function loadTasks() {
@@ -72,9 +109,9 @@ export default function HomePage() {
 
   return (
     <>
-      <EditTask modalOpened={modalOpened} task={task} setTask={setTask} closeModal={closeModal} saveTask={saveTask} />
+      <EditTask modalOpened={modalOpened} isTaskLoading={isTaskLoading} setIsTaskLoading={setIsTaskLoading} task={task} setTask={setTask} closeModal={closeModal} saveTask={saveTask} />
       <Container size={550} pos="relative">
-        <LoadingOverlay visible={isAllTasksLoading || isSavingTask} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
+        <LoadingOverlay visible={isAllTasksLoading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
         <TaskHeader toggleColorScheme={toggleColorScheme} colorScheme={colorScheme}></TaskHeader>
         <TaskList tasks={tasks} editTask={addOrEditTask} deleteTask={deleteTask} isAllTasksLoading={isAllTasksLoading}></TaskList>
         <Button onClick={() => addOrEditTask(0)} fullWidth mt={'md'}>New Task</Button>
